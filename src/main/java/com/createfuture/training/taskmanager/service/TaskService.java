@@ -33,4 +33,8 @@ public class TaskService {
     public void resetTasks() {
         taskRepository.reset();
     }
+
+    public List<Task> searchTasksByTitle(String term) {
+        return taskRepository.searchByTitle(term);
+    }
 }

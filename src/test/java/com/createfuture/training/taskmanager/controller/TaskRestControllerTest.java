@@ -60,8 +60,8 @@ class TaskRestControllerTest {
         when(taskService.addTask("New Task")).thenReturn(newTask);
 
         mockMvc.perform(post("/api/tasks")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content("{\"title\": \"New Task\"}"))
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("{\"title\": \"New Task\"}"))
                 .andExpect(status().isCreated())
                 .andExpect(jsonPath("$.title", is("New Task")));
     }
@@ -82,5 +82,22 @@ class TaskRestControllerTest {
 
         mockMvc.perform(delete("/api/tasks/99"))
                 .andExpect(status().isNotFound());
+    }
+
+    @Test
+    @DisplayName("GET /api/tasks/search?term=foo should return tasks matching the search term (partial, case-insensitive)")
+    void shouldReturnTasksMatchingSearchTerm() throws Exception {
+        List<Task> mockResults = Arrays.asList(
+                new Task("Foo Task"),
+                new Task("Another fooBar"),
+                new Task("barFOO"));
+        when(taskService.searchTasksByTitle("foo")).thenReturn(mockResults);
+
+        mockMvc.perform(get("/api/tasks/search?term=foo"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.length()", is(3)))
+                .andExpect(jsonPath("$[0].title", containsStringIgnoringCase("foo")))
+                .andExpect(jsonPath("$[1].title", containsStringIgnoringCase("foo")))
+                .andExpect(jsonPath("$[2].title", containsStringIgnoringCase("foo")));
     }
 }

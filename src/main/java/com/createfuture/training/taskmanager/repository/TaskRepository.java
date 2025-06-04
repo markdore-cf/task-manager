@@ -49,4 +49,10 @@ public class TaskRepository {
     public void reset() {
         jdbcTemplate.execute("DELETE FROM tasks");
     }
+
+    public List<Task> searchByTitle(String term) {
+        String sql = "SELECT * FROM tasks WHERE LOWER(title) LIKE ?";
+        String pattern = "%" + term.toLowerCase() + "%";
+        return jdbcTemplate.query(sql, taskMapper, pattern);
+    }
 }
