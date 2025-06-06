@@ -31,7 +31,7 @@ public class TaskController {
     }
 
     @PostMapping("/tasks/done")
-    public String markTaskDone(@RequestParam Long id) {
+    public String markTaskDone(@RequestParam String id) {
         taskService.markDone(id);
         return "redirect:/";
     }

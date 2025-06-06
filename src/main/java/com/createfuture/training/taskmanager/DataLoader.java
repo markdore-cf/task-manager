@@ -5,6 +5,11 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Component;
 
+/**
+ * Initializes the H2 database with a 'secrets' table.
+ * Note: The H2 database is now only used for the secrets table.
+ * Task data is stored in Google Cloud Firestore.
+ */
 @Component
 public class DataLoader {
 
@@ -13,7 +18,8 @@ public class DataLoader {
 
     @PostConstruct
     public void initSecrets() {
-        jdbcTemplate.execute("CREATE TABLE IF NOT EXISTS secrets (id INT AUTO_INCREMENT PRIMARY KEY, secret VARCHAR(255))");
+        jdbcTemplate
+                .execute("CREATE TABLE IF NOT EXISTS secrets (id INT AUTO_INCREMENT PRIMARY KEY, secret VARCHAR(255))");
 
         jdbcTemplate.execute("INSERT INTO secrets (secret) VALUES " +
                 "('The admin password is definitely not \"admin123\"')," +

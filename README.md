@@ -7,7 +7,9 @@ It includes a user interface for adding and completing tasks.
 
 * Java 21+
 * Gradle
-* H2 Database (embedded, runs in-memory)
+* H2 Database (embedded, runs in-memory for secrets storage)
+* Cloud Firestore (for task data storage)
+* Firebase CLI (for running the Firestore emulator locally)
 * Node.js and npm (for running end-to-end tests)
 
 ## Running the Application
@@ -19,16 +21,33 @@ It includes a user interface for adding and completing tasks.
    cd task-manager
    ```
 
-2. Build the project:
+## Firebase Setup
 
+1. Create a Firebase project and Firestore database:
+   - Go to [Firebase Console](https://console.firebase.google.com/)
+   - Create a new project or use an existing one
+   - Enable Firestore for the project
+
+2. Configure the service account key:
+   - Download the service account key from Firebase console (Project Settings → Service Accounts)
+   - Rename it to `serviceAccountKey.json` and place it in `src/main/resources/`
+
+3. Local development with the Firestore emulator:
+   - Install Firebase CLI if you haven't already: `npm install -g firebase-tools`
+   - Login to Firebase: `firebase login`
+   - List the projects to obtain project id: `firebase projects:list`
+   - Set default project: `firebase use <projectID>`
+   - Run the Firestore emulator in one terminal window:
    ```sh
-   ./gradlew build
+   firebase emulators:start --only firestore
    ```
-
-3. Run the application:
-
+   - Set the environment variable and run the Spring Boot application in another terminal:
    ```sh
-   ./gradlew bootRun
+   # macOS/Linux
+   export FIRESTORE_EMULATOR_HOST="localhost:8080" && ./gradlew bootRun
+   
+   # Windows (PowerShell)
+   # $env:FIRESTORE_EMULATOR_HOST="localhost:8080"; ./gradlew bootRun
    ```
 
 4. Open your browser and visit:
@@ -131,9 +150,11 @@ You can also use the prompt template in `tests/prompts/generate_e2e_test.md` wit
 ### Backend (Spring Boot)
 
 * `Task` – The model representing a single task.
-* `TaskRepository` – A simple repository using `JdbcTemplate` for data access.
+* `FirestoreTaskRepository` – Repository for storing tasks in Cloud Firestore.
+* `FirebaseConfig` - Configuration for Firebase initialization and Firestore access.
 * `TaskService` – The service layer for managing task logic.
-* `TaskController` – REST API endpoints for interacting with tasks.
+* `TaskController` – MVC controller for the web UI.
+* `TaskRestController` – REST API endpoints for interacting with tasks.
 * `templates/tasks.html` – The Thymeleaf front-end.
 * `static/style.css` – Styling for the UI.
 
@@ -148,6 +169,7 @@ You can also use the prompt template in `tests/prompts/generate_e2e_test.md` wit
 
 ## Notes
 
-* Task data is stored in an embedded H2 in-memory database.
-* Tables are created automatically on startup.
-* You can view the H2 console at `http://localhost:8080/h2-console`.
+* Task data is stored in Google Cloud Firestore.
+* For local development, the Firestore emulator should be used as described in the Firebase Setup section.
+* H2 in-memory database is still used for storing secrets, but tasks have been migrated to Firestore.
+* You can view the H2 console at `http://localhost:8080/h2-console` for debugging other application data if needed.

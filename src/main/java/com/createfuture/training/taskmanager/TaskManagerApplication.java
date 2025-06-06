@@ -6,6 +6,14 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.web.servlet.config.annotation.CorsRegistry;
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 
+/**
+ * Main application class for the Task Manager application.
+ * 
+ * Storage configuration:
+ * - Task data is stored in Google Cloud Firestore (configured in
+ * FirebaseConfig.java)
+ * - Secrets are stored in H2 in-memory database (for demo purposes only)
+ */
 @SpringBootApplication
 public class TaskManagerApplication {
 

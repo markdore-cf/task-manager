@@ -77,13 +77,13 @@ public class TaskRestController {
     /**
      * Marks the task with the specified ID as done (soft delete).
      *
-     * @param id the ID of the task to mark as done
+     * @param id the String ID of the task to mark as done (Firestore document ID)
      * @return {@link ResponseEntity} with HTTP 204 No Content if the task was found
      *         and marked as done,
      *         or HTTP 404 Not Found if no such task exists
      */
     @DeleteMapping("/{id}")
-    public ResponseEntity<Void> deleteTask(@PathVariable Long id) {
+    public ResponseEntity<Void> deleteTask(@PathVariable String id) {
         boolean removed = taskService.markDone(id);
         return removed ? ResponseEntity.noContent().build() : ResponseEntity.notFound().build();
     }

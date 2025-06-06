@@ -69,18 +69,18 @@ class TaskRestControllerTest {
     @Test
     @DisplayName("DELETE /api/tasks/{id} should delete a task if it exists")
     void shouldDeleteTask() throws Exception {
-        when(taskService.markDone(1L)).thenReturn(true);
+        when(taskService.markDone("abc123")).thenReturn(true);
 
-        mockMvc.perform(delete("/api/tasks/1"))
+        mockMvc.perform(delete("/api/tasks/abc123"))
                 .andExpect(status().isNoContent());
     }
 
     @Test
     @DisplayName("DELETE /api/tasks/{id} should return 404 if task not found")
     void shouldReturnNotFoundWhenDeletingMissingTask() throws Exception {
-        when(taskService.markDone(99L)).thenReturn(false);
+        when(taskService.markDone("nonexistent")).thenReturn(false);
 
-        mockMvc.perform(delete("/api/tasks/99"))
+        mockMvc.perform(delete("/api/tasks/nonexistent"))
                 .andExpect(status().isNotFound());
     }
 

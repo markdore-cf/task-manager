@@ -41,3 +41,10 @@ node_modules/
 package-lock.json
 test-results/
 tests/playwright-report
+
+### Firebase ###
+serviceAccountKey.json
+firestore-debug.log
+firebase-debug.log
+*.log
+.firebase/

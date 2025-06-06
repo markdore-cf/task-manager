@@ -1,19 +1,15 @@
 package com.createfuture.training.taskmanager.model;
 
-import jakarta.persistence.*;
-
 /**
  * Represents a task entity with an id and title.
+ * Adapted for Firestore storage.
  */
-@Entity
-@Table(name = "tasks")
 public class Task {
     /**
      * The unique identifier for the task.
+     * Using String for Firestore document IDs.
      */
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
+    private String id;
 
     /**
      * The title or description of the task.
@@ -39,10 +35,10 @@ public class Task {
     /**
      * Constructs a Task with the specified id and title.
      *
-     * @param id    the unique identifier of the task
+     * @param id    the unique identifier of the task (Firestore document ID)
      * @param title the title of the task
      */
-    public Task(long id, String title) {
+    public Task(String id, String title) {
         this.id = id;
         this.title = title;
     }
@@ -50,18 +46,18 @@ public class Task {
     /**
      * Sets the id of the task.
      *
-     * @param id the unique identifier to set
+     * @param id the unique identifier to set (Firestore document ID)
      */
-    public void setId(Long id) {
+    public void setId(String id) {
         this.id = id;
     }
 
     /**
      * Returns the id of the task.
      *
-     * @return the id of the task
+     * @return the id of the task (Firestore document ID)
      */
-    public Long getId() {
+    public String getId() {
         return id;
     }
 
@@ -91,7 +87,8 @@ public class Task {
     @Override
     public String toString() {
         return "Task{" +
-                "title='" + title + '\'' +
+                "id='" + id + '\'' +
+                ", title='" + title + '\'' +
                 '}';
     }
 }

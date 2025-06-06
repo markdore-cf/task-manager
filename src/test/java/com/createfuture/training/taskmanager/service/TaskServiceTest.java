@@ -1,111 +1,184 @@
 package com.createfuture.training.taskmanager.service;
 
 import com.createfuture.training.taskmanager.model.Task;
-import com.createfuture.training.taskmanager.repository.TaskRepository;
+import com.createfuture.training.taskmanager.repository.FirestoreTaskRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.mockito.Mockito;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.jdbc.core.JdbcTemplate;
-import org.springframework.test.context.ActiveProfiles;
-import org.springframework.transaction.annotation.Transactional;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.InjectMocks;
+import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
 
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
-import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.Mockito.when;
+import java.util.concurrent.ExecutionException;
 
-@SpringBootTest
-@ActiveProfiles("test")
-@Transactional
+import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.Mockito.*;
+
+@ExtendWith(MockitoExtension.class)
 public class TaskServiceTest {
 
-    @Autowired
+    @Mock
+    private FirestoreTaskRepository firestoreTaskRepository;
+
+    @InjectMocks
     private TaskService taskService;
-
-    @Autowired
-    private JdbcTemplate jdbcTemplate;
-
-    private TaskRepository repository;
 
     @BeforeEach
     void setUp() {
-        repository = Mockito.mock(TaskRepository.class);
+        // No need for additional setup with @ExtendWith(MockitoExtension.class)
     }
 
     @Test
-    void addTask_ShouldAddTaskToRepository() {
+    void addTask_ShouldCallRepository() throws ExecutionException, InterruptedException {
+        // Arrange
         String title = "Task 1";
-        taskService.addTask(title);
+        Task mockTask = new Task("task-id-123", title);
+        when(firestoreTaskRepository.addTask(title)).thenReturn(mockTask);
 
-        String sql = "SELECT COUNT(*) FROM tasks WHERE title = ?";
-        Integer count = jdbcTemplate.queryForObject(sql, Integer.class, title);
+        // Act
+        Task result = taskService.addTask(title);
 
-        assertNotNull(count);
-        assertEquals(1, count);
+        // Assert
+        assertNotNull(result);
+        assertEquals(title, result.getTitle());
+        assertEquals("task-id-123", result.getId());
+        verify(firestoreTaskRepository).addTask(title);
     }
 
     @Test
-    void getAllTasks_ShouldReturnAllTasks() {
-        taskService.addTask("Task 1");
-        taskService.addTask("Task 2");
+    void getAllTasks_ShouldReturnAllTasks() throws ExecutionException, InterruptedException {
+        // Arrange
+        List<Task> mockTasks = Arrays.asList(
+                new Task("id-1", "Task 1"),
+                new Task("id-2", "Task 2"));
+        when(firestoreTaskRepository.getAllTasks()).thenReturn(mockTasks);
 
-        List<Task> tasks = taskService.getAllTasks();
+        // Act
+        List<Task> result = taskService.getAllTasks();
 
-        assertEquals(2, tasks.size());
-        assertEquals("Task 1", tasks.get(0).getTitle());
-        assertEquals("Task 2", tasks.get(1).getTitle());
+        // Assert
+        assertEquals(2, result.size());
+        assertEquals("Task 1", result.get(0).getTitle());
+        assertEquals("Task 2", result.get(1).getTitle());
+        verify(firestoreTaskRepository).getAllTasks();
     }
 
     @Test
-    void getTopNTasks_ShouldReturnTopNTasks() {
-        taskService.addTask("Task 1");
-        taskService.addTask("Task 2");
-        taskService.addTask("Task 3");
+    void getTopNTasks_ShouldReturnTopNTasks() throws ExecutionException, InterruptedException {
+        // Arrange
+        List<Task> mockTasks = Arrays.asList(
+                new Task("id-1", "Task 1"),
+                new Task("id-2", "Task 2"));
+        when(firestoreTaskRepository.getTopNTasks(2)).thenReturn(mockTasks);
 
-        List<Task> topTasks = taskService.getTopNTasks(2);
+        // Act
+        List<Task> result = taskService.getTopNTasks(2);
 
-        assertEquals(2, topTasks.size());
-        assertEquals("Task 1", topTasks.get(0).getTitle());
-        assertEquals("Task 2", topTasks.get(1).getTitle());
+        // Assert
+        assertEquals(2, result.size());
+        assertEquals("Task 1", result.get(0).getTitle());
+        assertEquals("Task 2", result.get(1).getTitle());
+        verify(firestoreTaskRepository).getTopNTasks(2);
     }
 
     @Test
-    void getTopNTasks_ShouldReturnEmptyListWhenNIsZero() {
-        when(repository.findTopN(0)).thenReturn(Collections.emptyList());
+    void getTopNTasks_ShouldReturnEmptyListWhenNIsZero() throws ExecutionException, InterruptedException {
+        // Arrange
+        when(firestoreTaskRepository.getTopNTasks(0)).thenReturn(Collections.emptyList());
 
-        List<Task> top0Tasks = taskService.getTopNTasks(0);
-        assertTrue(top0Tasks.isEmpty());
+        // Act
+        List<Task> result = taskService.getTopNTasks(0);
+
+        // Assert
+        assertTrue(result.isEmpty());
+        verify(firestoreTaskRepository).getTopNTasks(0);
     }
 
     @Test
-    void getTopNTasks_ShouldReturnAllTasksWhenNIsGreaterThanSize() {
-        taskService.addTask("Task 1");
-        taskService.addTask("Task 2");
+    void markDone_ShouldCallRepositoryWithStringId() throws ExecutionException, InterruptedException {
+        // Arrange
+        String taskId = "task-id-123";
+        when(firestoreTaskRepository.markDone(taskId)).thenReturn(true);
 
-        List<Task> tasks = taskService.getTopNTasks(5); // N > total
-
-        assertEquals(2, tasks.size());
-    }
-
-    @Test
-    void markDone_ShouldRemoveTask() {
-        Task task = new Task("Task 1");
-        taskService.addTask(task.getTitle());
-
-        Long taskId = taskService.getAllTasks().get(0).getId(); // Retrieve the ID of the added task
+        // Act
         boolean result = taskService.markDone(taskId);
 
+        // Assert
         assertTrue(result);
-
-        List<Task> tasks = taskService.getAllTasks();
-        assertTrue(tasks.stream().noneMatch(t -> t.getId().equals(taskId)));
+        verify(firestoreTaskRepository).markDone(taskId);
     }
 
     @Test
-    void markDone_ShouldReturnFalseIfTaskNotFound() {
-        boolean result = taskService.markDone(999L); // Use a non-existent ID
+    void markDone_ShouldReturnFalseIfTaskNotFound() throws ExecutionException, InterruptedException {
+        // Arrange
+        String taskId = "nonexistent-id";
+        when(firestoreTaskRepository.markDone(taskId)).thenReturn(false);
+
+        // Act
+        boolean result = taskService.markDone(taskId);
+
+        // Assert
         assertFalse(result);
+        verify(firestoreTaskRepository).markDone(taskId);
+    }
+
+    @Test
+    void searchTasksByTitle_ShouldReturnMatchingTasks() throws ExecutionException, InterruptedException {
+        // Arrange
+        String searchTerm = "test";
+        List<Task> mockTasks = Arrays.asList(
+                new Task("id-1", "Test Task"),
+                new Task("id-2", "Another test"));
+        when(firestoreTaskRepository.searchTasksByTitle(searchTerm)).thenReturn(mockTasks);
+
+        // Act
+        List<Task> result = taskService.searchTasksByTitle(searchTerm);
+
+        // Assert
+        assertEquals(2, result.size());
+        verify(firestoreTaskRepository).searchTasksByTitle(searchTerm);
+    }
+
+    @Test
+    void getTaskById_ShouldReturnTaskIfExists() throws ExecutionException, InterruptedException {
+        // Arrange
+        String taskId = "task-id-123";
+        Task mockTask = new Task(taskId, "Task 1");
+        when(firestoreTaskRepository.findById(taskId)).thenReturn(mockTask);
+
+        // Act
+        Task result = taskService.getTaskById(taskId);
+
+        // Assert
+        assertNotNull(result);
+        assertEquals(taskId, result.getId());
+        assertEquals("Task 1", result.getTitle());
+        verify(firestoreTaskRepository).findById(taskId);
+    }
+
+    @Test
+    void getTaskById_ShouldReturnNullIfTaskNotFound() throws ExecutionException, InterruptedException {
+        // Arrange
+        String taskId = "nonexistent-id";
+        when(firestoreTaskRepository.findById(taskId)).thenReturn(null);
+
+        // Act
+        Task result = taskService.getTaskById(taskId);
+
+        // Assert
+        assertNull(result);
+        verify(firestoreTaskRepository).findById(taskId);
+    }
+
+    @Test
+    void resetTasks_ShouldCallRepository() throws ExecutionException, InterruptedException {
+        // Act
+        taskService.resetTasks();
+
+        // Assert
+        verify(firestoreTaskRepository).resetTasks();
     }
 }
